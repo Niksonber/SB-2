@@ -1,8 +1,8 @@
 %macro endl 0
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, endlineeee
-    mov edx, 1
+    mov EAX, 4
+    mov EBX, 1
+    mov ECX, endlineeee
+    mov EDX, 1
     int 80h
 %endmacro
 
@@ -17,22 +17,21 @@
 %endmacro
 
 
-
 %macro mult 1
-    mov ebx, [%1]
-    mov edx, eax
-    imul ebx
-    cmp eax,0
+    mov EBX, [%1]
+    mov EDX, EAX
+    imul EBX
+    cmp EAX,0
     jl low
 gre:     
-    cmp edx, 0x00000000
+    cmp EDX, 0x00000000
     je contmul
     jmp over
 low:
-    cmp edx, 0xffffffff
+    cmp EDX, 0xffffffff
     je contmul
 over:
-    S_OUTPUT 1, o, 8
+    escreve o, 8
     return 1
 contmul:
 %endmacro
@@ -72,28 +71,12 @@ contmul:
     int 80h
 %endmacro
 
-%macro S_INPUT 3
-    mov EAX, 3
-    mov EBX, %1
-    mov ECX, %2
-    mov EDX, %3
-    int 80h
-%endmacro
-
-%macro S_OUTPUT 3
-    mov EAX, 4
-    mov EBX, %1
-    mov ECX, %2
-    mov EDX, %3
-    int 80h
-%endmacro
-
 swap:   
      enter 0, 0
      pusha
-    mov EAX, [ebp+12]
-    mov ECX, [ebp+8]
-    add ECX, eax
+    mov EAX, [EBP+12]
+    mov ECX, [EBP+8]
+    add ECX, EAX
 l1: cmp EAX, ECX
     jae co
     mov BL, [EAX]
@@ -126,104 +109,156 @@ cont:
 
     
 %macro ler 2
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, [%1]
-    mov edx, %2
+    mov EAX, 3
+    mov EBX, 0
+    mov ECX, %1
+    mov EDX, %2
     int 80h
 %endmacro
 
 %macro escreve 2
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, [%1]
-    mov edx, %2
+    mov EAX, 4
+    mov EBX, 1
+    mov ECX, %1
+    mov EDX, %2
     int 80h
 %endmacro
 
+S_INPUT: ; INPUT(** char, int) 
+    enter 0,0
+    push EBX
+    push ECX
+    push EDX
+    mov ECX, [EBP+8]
+    mov EBX, [EBP+12] ; inicio do vetor
+    add ECX, EBX    ; fim do vetor
+loopsinput:
+    push EBX
+    call C_INPUT
+    cmp byte [EBX], 0xa   ;confere se eh fim de linha
+    je fimsinput
+    inc EBX
+    cmp EBX, ECX
+    jb loopsinput
+    mov byte [EBX], 0xa 
+fimsinput:
+    mov EAX, EBX
+    sub EAX,[EBP+12]
+    pop EDX
+    pop ECX
+    pop EBX
+    leave
+ret
+
+S_OUTPUT: ; INPUT(** char, int) 
+    enter 0,0
+    push EBX
+    push ECX
+    push EDX
+    mov ECX, [EBP+8]
+    mov EBX, [EBP+12] ; inicio do vetor
+    add ECX, EBX    ; fim do vetor
+loopsoutput:
+    push EBX
+    call C_OUTPUT
+    cmp byte [EBX], 0xa   ;confere se eh fim de linha
+    je fimsinput
+    inc EBX
+    cmp EBX, ECX
+    jb loopsoutput
+    newl
+fimsoutput:
+    mov EAX, EBX
+    sub EAX,[EBP+12]
+    pop EDX
+    pop ECX
+    pop EBX
+    leave
+ret
+
+
+
 C_INPUT: ; INPUT(* char) 
     enter 0,0
-    push eax
-    push ebx
-    push ecx
-    push edx
-    ler ebp+8, 1 
-    endl
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    push EBX
+    push ECX
+    push EDX
+    ler [EBP+8], 1 
+    ;endl
+    pop EDX
+    pop ECX
+    pop EBX
     leave
-    ret
+    ret 1
     
 C_OUTPUT: ; OUTPUT(* char) 
     enter 0,0
-    push eax
-    push ebx
-    push ecx
-    push edx
-    escreve ebp+8, 1 
-    endl
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    push EAX
+    push EBX
+    push ECX
+    push EDX
+    escreve dword [EBP+8], 1 
+    ;endl
+    pop EDX
+    pop ECX
+    pop EBX
+    pop EAX
     leave
     ret
 
 INPUT: ; INPUT(* int) 
     enter 6,0
-    push eax
-    push ebx
-    push ecx
-    push edx
-    mov dword [ebp-6], 0
-    mov byte [ebp-2], 0
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, ebp
-    sub ecx, 1
-    mov edx, 1
+    push EAX
+    push EBX
+    push ECX
+    push EDX
+    mov dword [EBP-6], 0
+    mov byte [EBP-2], 0
+    mov EAX, 3
+    mov EBX, 0
+    mov ECX, EBP
+    sub ECX, 1
+    mov EDX, 1
     int 80h
-    cmp byte [ebp-1], '-'
+    cmp byte [EBP-1], '-'
     jne pli
-    mov byte [ebp-2], '-'
+    mov byte [EBP-2], '-'
 loopinput:
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, ebp
-    sub ecx, 1
-    mov edx, 1
+    mov EAX, 3
+    mov EBX, 0
+    mov ECX, EBP
+    sub ECX, 1
+    mov EDX, 1
     int 80h
 pli:
-    mov esi, [ebp-6]
-    cmp byte [ebp-1], 0xa   ;confere se eh fim de linha
+    mov ESI, [EBP-6]
+    cmp byte [EBP-1], 0xa   ;confere se eh fim de linha
     je fiminput
-    cmp byte [ebp-1], 0x30  ;verifica se eh um numero valido
+    cmp byte [EBP-1], 0x30  ;verifica se eh um numero valido
     jb inv
-    cmp byte [ebp-1], 0x39  ;verifica se eh um numero valido
+    cmp byte [EBP-1], 0x39  ;verifica se eh um numero valido
     ja inv
     mov EAX, 10
-    mul dword [ebp-6]
-    add byte AL, [ebp-1]
+    mul dword [EBP-6]
+    add byte AL, [EBP-1]
     adc AH, 0
     sub EAX, 0x30
-    mov dword [ebp-6], eax
+    mov dword [EBP-6], EAX
     jmp loopinput
 inv: 
 
 fiminput:
-    cmp byte [ebp-2], '-'
+    cmp byte [EBP-2], '-'
     jne fimfiminput
-    neg dword [ebp-6]
+    neg dword [EBP-6]
 fimfiminput:
-    mov eax, [ebp-6]
-    mov ebx, [ebp+8]
-    mov dword [ebx], eax
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    mov EAX, [EBP-6]
+    mov EBX, [EBP+8]
+    mov dword [EBX], EAX
+    pop EDX
+    pop ECX
+    pop EBX
+    pop EAX
     leave
 ret
 
@@ -232,14 +267,14 @@ OUTPUT: ; OUTPUT(* int)
     enter 4,0
     pusha
     mov ECX, 0
-    mov EAX, [ebp+8]
-    mov EBX, [ebp+12]
-    mov dword [ebp-4],10
+    mov EAX, [EBP+8]
+    mov EBX, [EBP+12]
+    mov dword [EBP-4],10
     cmp EAX, 0
     jge l
     neg EAX
 l:  cdq
-    div dword [ebp-4]
+    div dword [EBP-4]
     add EDX, 0x30
     mov byte [EBX + ECX], DL
     inc ECX
@@ -247,23 +282,24 @@ l:  cdq
     cmp EAX, 0
     jne l
     ;inc ECX
-    mov EAX, [ebp+8]
-    cmp eax, 0
+    mov EAX, [EBP+8]
+    cmp EAX, 0
     jge s
     mov byte [EBX + ECX ], '-'
     inc ECX
 s:  mov EAX, ECX
     dec ECX
-    push ebx
+    push EBX
     push ECX
     call swap
     ;mov byte [%2 + ECX], 0
-    mov edx, eax
-    mov ecx, ebx
-    mov eax, 4
-    mov ebx, 1
+    mov EDX, EAX
+    mov ECX, EBX
+    mov EAX, 4
+    mov EBX, 1
     int 80h
     endl
+    add EAX,1
     popa
     leave
 ret
@@ -273,22 +309,31 @@ section .text
 
 global _start
 _start:
-    mov ebp, esp; for correct debugging
+    mov EBP, ESP; for correct debugging
     push n
     call INPUT
 ;   atoi n, a, TAMa 
 ;   sub dword [n], 12
-;        mov eax, 1023  
+;        mov EAX, 1023  
  ;       mult n2
- ;       mov [n],eax
- push b
- push dword [n]
- call OUTPUT
+ ;       mov [n],EAX
+    push b
+    push dword [n]
+    call OUTPUT
 
-        S_OUTPUT 1, cd, 100
+        ;S_OUTPUT 1, cd, 100
         ;S_OUTPUT 1, a, TAMa
-        sum1 a
-        mov eax, 10
+    push d
+    push dword 100
+    call S_INPUT
+    push d
+    push dword 2
+    call S_OUTPUT
+        ;push d
+        ;push 100
+        ;call S_OUTPUT
+        ;sum1 a
+        ;mov EAX, 10
       ;  mult n2
 
     stop
@@ -307,3 +352,4 @@ section .data
 section .bss
     n: resd 1
     b: resb 100
+        d: resb 100
