@@ -16,9 +16,29 @@
     int 80h
 %endmacro
 
+%macro ler 2
+    mov EAX, 3
+    mov EBX, 0
+    mov ECX, %1
+    mov EDX, %2
+    int 80h
+%endmacro
 
-%macro mult 1
-    mov EBX, [%1]
+%macro escreve 2
+    mov EAX, 4
+    mov EBX, 1
+    mov ECX, %1
+    mov EDX, %2
+    int 80h
+%endmacro
+
+mult:
+    enter 0,0
+    push EBX
+    push ECX
+    push EDX
+    mov EBX, [ebp+8]
+    mov EBX, [EBX]
     mov EDX, EAX
     imul EBX
     cmp EAX,0
@@ -31,10 +51,14 @@ low:
     cmp EDX, 0xffffffff
     je contmul
 over:
-    escreve o, 8
+    escreve dword overflow101010, TAMoverflow101010
     return 1
 contmul:
-%endmacro
+    pop EDX
+    pop ECX
+    pop EBX
+    leave
+ret 4
 
 %macro jmpn 1
     cmp EAX,0
@@ -71,7 +95,7 @@ contmul:
     int 80h
 %endmacro
 
-swap:   
+swap: ; swap(**char, **char)
      enter 0, 0
      pusha
     mov EAX, [EBP+12]
@@ -107,22 +131,6 @@ cont:
     mov dword [%1], EAX
 %endmacro
 
-    
-%macro ler 2
-    mov EAX, 3
-    mov EBX, 0
-    mov ECX, %1
-    mov EDX, %2
-    int 80h
-%endmacro
-
-%macro escreve 2
-    mov EAX, 4
-    mov EBX, 1
-    mov ECX, %1
-    mov EDX, %2
-    int 80h
-%endmacro
 
 S_INPUT: ; INPUT(** char, int) 
     enter 0,0
@@ -148,7 +156,7 @@ fimsinput:
     pop ECX
     pop EBX
     leave
-ret
+ret 8
 
 S_OUTPUT: ; INPUT(** char, int) 
     enter 0,0
@@ -166,7 +174,7 @@ loopsoutput:
     inc EBX
     cmp EBX, ECX
     jb loopsoutput
-    newl
+    endl
 fimsoutput:
     mov EAX, EBX
     sub EAX,[EBP+12]
@@ -174,7 +182,7 @@ fimsoutput:
     pop ECX
     pop EBX
     leave
-ret
+ret 8
 
 
 
@@ -189,7 +197,7 @@ C_INPUT: ; INPUT(* char)
     pop ECX
     pop EBX
     leave
-    ret 1
+ret 4
     
 C_OUTPUT: ; OUTPUT(* char) 
     enter 0,0
@@ -204,7 +212,7 @@ C_OUTPUT: ; OUTPUT(* char)
     pop EBX
     pop EAX
     leave
-    ret
+ret 4
 
 INPUT: ; INPUT(* int) 
     enter 6,0
@@ -246,7 +254,7 @@ pli:
     mov dword [EBP-6], EAX
     jmp loopinput
 inv: 
-
+    escreve dword numInvalido101010, TAMnumInvalido101010
 fiminput:
     cmp byte [EBP-2], '-'
     jne fimfiminput
@@ -260,10 +268,10 @@ fimfiminput:
     pop EBX
     pop EAX
     leave
-ret
+ret 4
 
 
-OUTPUT: ; OUTPUT(* int) 
+OUTPUT: ; OUTPUT(**char, int) 
     enter 4,0
     pusha
     mov ECX, 0
@@ -302,7 +310,7 @@ s:  mov EAX, ECX
     add EAX,1
     popa
     leave
-ret
+ret 8
 
 
 section .text
@@ -312,44 +320,35 @@ _start:
     mov EBP, ESP; for correct debugging
     push n
     call INPUT
-;   atoi n, a, TAMa 
-;   sub dword [n], 12
-;        mov EAX, 1023  
- ;       mult n2
- ;       mov [n],EAX
     push b
     push dword [n]
     call OUTPUT
-
-        ;S_OUTPUT 1, cd, 100
-        ;S_OUTPUT 1, a, TAMa
     push d
     push dword 100
     call S_INPUT
     push d
-    push dword 2
+    push dword 100
     call S_OUTPUT
-        ;push d
-        ;push 100
-        ;call S_OUTPUT
-        ;sum1 a
-        ;mov EAX, 10
-      ;  mult n2
-
     stop
 
 
 section .data
     a: db "12"
-   ;      4294967295
+    ;4294967295
     TAMa EQU $-a
     cd: db "isso eh um teste", 0xa
-        o:  db "overflow"
+    
+    ;linhas adicionadas automaticamente para avisar de erros durante a execução
+    overflow101010:  db "overflow", 0xa
+    TAMoverflow101010 EQU $-overflow101010
+    numInvalido101010:  db "Esperava-se um numero, um caracter invalido foi digitado", 0xa
+    TAMnumInvalido101010 EQU $-numInvalido101010
+    
     n2: dd 10
-;   b: db "0"
+    ;b: db "0"
     k: dd 329496712
-        endlineeee: db 0xa
+    endlineeee: db 0xa
 section .bss
     n: resd 1
     b: resb 100
-        d: resb 100
+    d: resb 100
